@@ -114,7 +114,15 @@ class Board:
         if self.current_state[x0,x1] != 0: # the position has been occupied
             return False
         self.current_state[x0,x1] = player
-        print(self.cluster_4direct(pos, player))
+        # if remove some pieces:
+        clst = self.cluster_4direct(pos, player)
+        rmv = self.capture(clst)
+        for i,x in enum(rmv):
+            if x:
+                to_remv = clst[i]
+                for k in to_remv:
+                    k0,k1 = k
+                    self.current_state[k0,k1] = 0
         self.display()
         return True
 
@@ -180,7 +188,7 @@ class Board:
     def cluster_4direct(self, pos, player):
         # to get the cluster of all the 4 directions
         # and merge them together
-        x = []
+        z = []
         #
         y1 = self.cluster_1direct(pos, player, 'L')
         y2 = self.cluster_1direct(pos, player, 'R')
@@ -202,19 +210,37 @@ class Board:
         #
         for i in [y1,y2,y3,y4]:
             if i != False:
-                x.append(i)
-        return x
+                z.append(i)
+        return z
 
 
-    def if_qi(clus):
+    def if_qi(self, clus):
         # if the given cluster has at least 1 qi
-        return
+        for x in clus:
+            x0,x1 = x
+            #
+            if x0>0:
+                if self.current_state[x0-1, x1] == 0:
+                    return True
+            #
+            if x0<(board_size-1):
+                if self.current_state[x0+1, x1] == 0:
+                    return True
+            #
+            if x1>0:
+                if self.current_state[x0, x1-1] == 0:
+                    return True
+            #
+            if x1<(board_size-1):
+                if self.current_state[x0, x1+1] == 0:
+                    return True
+        return False
 
 
     def capture(self, clus):
         # if there are pieces to remove, for the new put piece
         # at position pos, put by the player
-        return
+        return [ (not self.if_qi(c)) for c in clus ]
 
 
 if __name__ == "__main__":
