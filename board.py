@@ -22,7 +22,8 @@ board_size = 19  # the board is 19x19
 class Board:
     # to display the board in terminal
 
-    current_state = zeros([board_size,board_size])
+
+    current_state = zeros([board_size,board_size], dtype=np.int)
 
 
     def __init__(self, bdst = zeros([board_size,board_size])):
@@ -35,7 +36,11 @@ class Board:
 
 
     def reset(self):
-        self.current_state = zeros([board_size,board_size])
+        self.current_state = zeros([board_size,board_size], dtype=np.int)
+
+
+    def get(self):
+        return self.current_state.copy()
 
 
     def display(self):
@@ -102,6 +107,115 @@ class Board:
         print()
 
 
+    def put_piece(self, pos, player):
+        # pos is the position to put new piece
+        # player is 1 or 2 meaning who put the piece
+        x0,x1 = pos
+        if self.current_state[x0,x1] != 0: # the position has been occupied
+            return False
+        self.current_state[x0,x1] = player
+        print(self.cluster_4direct(pos, player))
+        self.display()
+        return True
+
+
+    def cluster_1direct(self, pos, player, flag):
+        # to get the cluster of given direction (flag)
+        # of the given position (pos)
+        # only collect the opposite player's pieces
+        if player == 1:
+            opst = 2
+        elif player == 2:
+            opst = 1
+        else:
+            return False
+        #
+        x0,x1 = pos
+        if flag=='L' or flag=='l':
+            if x0<=0: return False
+            if self.current_state[x0-1, x1] != opst: return False
+            clus = [ [x0-1,x1] ]
+            tobe_proc = [ [x0-1,x1] ]
+        if flag=='R' or flag=='r':
+            if x0>=(board_size-1): return False
+            if self.current_state[x0+1, x1] != opst: return False
+            clus = [ [x0+1,x1] ]
+            tobe_proc = [ [x0+1,x1] ]
+        if flag=='U' or flag=='u':
+            if x1<=0: return False
+            if self.current_state[x0, x1-1] != opst: return False
+            clus = [ [x0,x1-1] ]
+            tobe_proc = [ [x0,x1-1] ]
+        if flag=='D' or flag=='d':
+            if x0>=(board_size-1): return False
+            if self.current_state[x0, x1+1] != opst: return False
+            clus = [ [x0,x1+1] ]
+            tobe_proc = [ [x0,x1+1] ]
+        #
+        while len(tobe_proc)>0:
+            x0,x1 = tobe_proc.pop(0)  # get the queue head
+            if x0>0:
+                if self.current_state[x0-1, x1] == opst \
+                and [x0-1, x1] not in clus:
+                    clus.append([x0-1, x1])
+                    tobe_proc.append([x0-1, x1])
+            if x0<(board_size-1):
+                if self.current_state[x0+1, x1] == opst \
+                and [x0+1, x1] not in clus:
+                    clus.append([x0+1, x1])
+                    tobe_proc.append([x0+1, x1])
+            if x1>0:
+                if self.current_state[x0, x1-1] == opst \
+                and [x0, x1-1] not in clus:
+                    clus.append([x0, x1-1])
+                    tobe_proc.append([x0, x1-1])
+            if x1<(board_size-1):
+                if self.current_state[x0, x1+1] == opst \
+                and [x0, x1+1] not in clus:
+                    clus.append([x0, x1+1])
+                    tobe_proc.append([x0, x1+1])
+        return clus
+
+
+    def cluster_4direct(self, pos, player):
+        # to get the cluster of all the 4 directions
+        # and merge them together
+        x = []
+        #
+        y1 = self.cluster_1direct(pos, player, 'L')
+        y2 = self.cluster_1direct(pos, player, 'R')
+        y3 = self.cluster_1direct(pos, player, 'U')
+        y4 = self.cluster_1direct(pos, player, 'D')
+        #
+        if y1 != False and y2 != False:
+            if y1[0] in y2: y2 = False
+        if y1 != False and y3 != False:
+            if y1[0] in y3: y3 = False
+        if y1 != False and y4 != False:
+            if y1[0] in y4: y4 = False
+        if y2 != False and y3 != False:
+            if y2[0] in y3: y3 = False
+        if y2 != False and y4 != False:
+            if y2[0] in y4: y4 = False
+        if y3 != False and y4 != False:
+            if y3[0] in y4: y4 = False
+        #
+        for i in [y1,y2,y3,y4]:
+            if i != False:
+                x.append(i)
+        return x
+
+
+    def if_qi(clus):
+        # if the given cluster has at least 1 qi
+        return
+
+
+    def capture(self, clus):
+        # if there are pieces to remove, for the new put piece
+        # at position pos, put by the player
+        return
+
 
 if __name__ == "__main__":
     x=array([[6,4], [3,3], [1,8], [4,3], [1,19], [3,4], [12,1]])
@@ -111,5 +225,6 @@ if __name__ == "__main__":
     for i0,i1 in x: bdst[i0-1,i1-1] = 1  # -1 to convert to matrix
     for i0,i1 in o: bdst[i0-1,i1-1] = 2  #    to count from 0
 
-    bd = Board(bdst)
+    bd = Board()
+    bd.setto(bdst)
     bd.display()
